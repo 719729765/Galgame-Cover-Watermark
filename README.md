@@ -103,5 +103,3 @@ Windows 预编译版发布后，可从本仓库的 **Releases** 页面下载。�
 - 执行过的完整命令（如果是打包问题）
 
 请勿上传包含个人隐私或不便公开的图片。
-
-![Galgame Cover Watermark Banner](logo.jpeg)
