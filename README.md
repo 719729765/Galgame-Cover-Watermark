@@ -129,3 +129,7 @@ GitHub：[Galgame-Cover-Watermark](https://github.com/719729765/Galgame-Cover-Wa
 - 执行过的完整打包命令（若是打包问题）
 
 请勿上传包含个人隐私或不便公开的图片。
+
+## 最后发个截图
+<img width="1520" height="1521" alt="image" src="https://github.com/user-attachments/assets/61e2c09e-a480-4257-81c4-70a580889dd3" />
+
