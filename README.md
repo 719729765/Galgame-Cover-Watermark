@@ -1,5 +1,7 @@
 # Galgame Cover Watermark
 
+![Uploading image.png…]()
+
 **Galgame 封面标题监控器**是一款面向 Windows 的桌面小工具，用于给 Galgame 封面图片添加居中的游戏标题，并将成品统一保存为 WebP。程序支持系统托盘后台运行，可选择手动逐张确认，也可开启自动加水印。
 
 - **开发者：** 码铃薯
