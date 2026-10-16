@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Galgame 封面标题自动添加器</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#11121a; --panel:#1a1c28; --panel2:#202333; --line:#34384d;
+    --text:#f5f4ff; --muted:#a8abc2; --accent:#b8a5ff; --accent2:#7be1d2;
+    --warning:#ffd38b; --danger:#ff8d9a; --good:#86e0b0;
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1100px 500px at 10% -10%,#30294e 0%,transparent 65%),var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+  .wrap{width:min(1180px,calc(100% - 32px));margin:0 auto;padding:36px 0 48px}
+  .hero{display:flex;gap:22px;align-items:flex-start;justify-content:space-between;margin-bottom:24px}
+  .eyebrow{color:var(--accent2);font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+  h1{font-size:clamp(26px,4vw,40px);line-height:1.14;margin:9px 0 12px;letter-spacing:-.035em}
+  .hero p{max-width:740px;color:var(--muted);margin:0}
+  .pill{white-space:nowrap;display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid #47425e;background:#27243a;border-radius:999px;color:#e9e2ff;font-weight:700;font-size:12px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--accent2);box-shadow:0 0 12px #7be1d288}
+  .grid{display:grid;grid-template-columns:minmax(290px,.86fr) minmax(0,1.14fr);gap:18px;align-items:start}
+  .panel{background:linear-gradient(180deg,#1d1f2c,#181a25);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:0 16px 40px #0002;min-width:0}
+  .panel h2{font-size:17px;margin:0 0 4px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 20px}
+  .field{margin:17px 0}
+  label,.label-row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:700;margin-bottom:8px}
+  .value{font-variant-numeric:tabular-nums;color:var(--accent2);font-size:12px;font-weight:800}
+  input[type=text],select{width:100%;border:1px solid #3a3d53;background:#11131d;color:var(--text);border-radius:11px;padding:12px 13px;outline:none;font:inherit}
+  input[type=text]:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #b8a5ff1c}
+  input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
+  input[type=color]{height:40px;width:58px;border:1px solid var(--line);border-radius:10px;background:#11131d;padding:4px;cursor:pointer}
+  .inline{display:flex;align-items:center;gap:12px}
+  .inline select{flex:1}
+  .hint{font-size:12px;color:var(--muted);margin:7px 0 0}
+  .sep{height:1px;background:var(--line);margin:22px 0}
+  .button-row{display:flex;gap:9px;flex-wrap:wrap}
+  button{appearance:none;border:1px solid #474b64;border-radius:11px;padding:11px 15px;background:#282b3c;color:var(--text);font:700 13px/1.2 system-ui,-apple-system,'Segoe UI','Microsoft YaHei',sans-serif;cursor:pointer;transition:transform .15s,border-color .15s,opacity .15s}
+  button:hover:not(:disabled){transform:translateY(-1px);border-color:#77729a}
+  button:disabled{opacity:.38;cursor:not-allowed}
+  button.primary{background:linear-gradient(135deg,#c0b0ff,#9883ee);border-color:transparent;color:#1b1730}
+  button.stop{background:#3a222d;border-color:#75404c;color:#ffc5cc}
+  .folder-box{border:1px dashed #4a4d65;background:#151722;border-radius:14px;padding:14px;margin:14px 0}
+  .folder-title{font-weight:800;overflow-wrap:anywhere}
+  .folder-path{font-size:12px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
+  .status{display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:11px;background:#25283a;border:1px solid #3c4058;font-size:13px;margin:14px 0}
+  .status-indicator{width:9px;height:9px;flex:none;border-radius:50%;background:#8589a2}
+  .status.running .status-indicator{background:var(--good);box-shadow:0 0 11px #86e0b077}
+  .status.error .status-indicator{background:var(--danger)}
+  .status-text{overflow-wrap:anywhere}
+  .mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 0}
+  .mini{border:1px solid var(--line);border-radius:12px;padding:12px;background:#171923}
+  .mini .k{font-size:11px;color:var(--muted)}
+  .mini .v{font-size:21px;letter-spacing:-.04em;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums}
+  .preview-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .preview-area{margin-top:14px;min-height:310px;border-radius:15px;border:1px solid #373a50;background-color:#141620;background-image:linear-gradient(45deg,#ffffff08 25%,transparent 25%),linear-gradient(-45deg,#ffffff08 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#ffffff08 75%),linear-gradient(-45deg,transparent 75%,#ffffff08 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:10px}
+  canvas{display:block;max-width:100%;max-height:520px;width:auto;height:auto;object-fit:contain;border-radius:5px}
+  .empty{max-width:340px;text-align:center;color:var(--muted);padding:28px}
+  .empty-icon{font-size:32px;margin-bottom:8px;filter:saturate(.8)}
+  .file-pick{display:inline-flex;align-items:center;gap:8px;color:#ddd5ff;font-weight:700;font-size:12px;cursor:pointer}
+  .file-pick input{max-width:220px;font-size:12px;color:var(--muted)}
+  .notice{border-radius:12px;padding:13px 14px;background:#2c281d;border:1px solid #655232;color:#f4ddb0;font-size:12px;margin-top:18px}
+  .notice strong{color:#ffe9bd}
+  .log-head{display:flex;justify-content:space-between;align-items:center;margin-top:20px;margin-bottom:9px}
+  .log-head h3{font-size:14px;margin:0}
+  .log{border:1px solid var(--line);border-radius:12px;background:#11131b;max-height:190px;overflow:auto;padding:8px 12px}
+  .log-item{padding:8px 0;border-bottom:1px solid #ffffff0c;font-size:12px;overflow-wrap:anywhere}
+  .log-item:last-child{border-bottom:0}
+  .log-time{color:#777c99;font-variant-numeric:tabular-nums;margin-right:7px}
+  .log-item.ok .msg{color:var(--good)}.log-item.warn .msg{color:var(--warning)}.log-item.err .msg{color:var(--danger)}
+  .footer{margin-top:18px;color:#80849d;font-size:12px;display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}.hero{display:block}.pill{margin-top:16px}.panel{padding:18px}.preview-area{min-height:220px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <div class="eyebrow">LOCAL COVER WORKFLOW · NO UPLOAD</div>
+      <h1>Galgame 封面标题自动添加器</h1>
+      <p>监控指定文件夹里的 <code>0.jpg / 0.png / 0.webp</code>。新图片出现或原图被替换后，自动居中叠加游戏标题，并将成品保存到独立文件夹。</p>
+    </div>
+    <div class="pill"><span class="dot"></span>本地处理 · 原图不覆盖</div>
+  </header>
+
+  <main class="grid">
+    <section class="panel" aria-labelledby="settings-title">
+      <h2 id="settings-title">标题样式</h2>
+      <p class="sub">修改后会即时更新右侧预览。监控时使用当前设置。</p>
+
+      <div class="field">
+        <label for="gameTitle">游戏名称 <span class="value">TITLE</span></label>
+        <input id="gameTitle" type="text" maxlength="160" value="游戏名称" placeholder="输入要叠加的游戏名" />
+        <p class="hint">可填中文、日文或英文；也可以直接修改 HTML 中此输入框的 value 默认值。</p>
+      </div>
+
+      <div class="field">
+        <div class="label-row"><label for="titleRatio">标题最大宽度</label><span class="value" id="ratioValue">33%</span></div>
+        <input id="titleRatio" type="range" min="15" max="80" step="1" value="33" />
+        <p class="hint">按封面宽度计算；长标题会自动缩小，过长时会换行。</p>
+      </div>
+
+      <div class="field">
+        <label for="fontFamily">字体风格</label>
+        <select id="fontFamily">
+          <option value="system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif">现代无衬线（默认）</option>
+          <option value="'Arial Black', 'Microsoft YaHei', sans-serif">粗黑标题</option>
+          <option value="Georgia, 'Yu Mincho', 'Microsoft YaHei', serif">衬线风格</option>
+          <option value="'Trebuchet MS', 'Microsoft YaHei', sans-serif">柔和圆润</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <div class="label-row"><label for="textColor">标题颜色</label><span class="value" id="colorValue">#FFFFFF</span></div>
+        <div class="inline"><input id="textColor" type="color" value="#ffffff" /><span class="hint">默认白字搭配深色描边和阴影，适配多数背景。</span></div>
+      </div>
+
+      <div class="field">
+        <div class="label-row"><label for="shadow">阴影强度</label><span class="value" id="shadowValue">18%</span></div>
+        <input id="shadow" type="range" min="0" max="40" step="1" value="18" />
+      </div>
+
+      <div class="field">
+        <div class="label-row"><label for="quality">JPG / WebP 输出质量</label><span class="value" id="qualityValue">92%</span></div>
+        <input id="quality" type="range" min="70" max="100" step="1" value="92" />
+        <p class="hint">PNG 为无损输出，此选项不影响 PNG。</p>
+      </div>
+
+      <div class="sep"></div>
+      <h2>自动监控</h2>
+      <p class="sub">首次启动仅登记现有目标文件，不会立即处理它们。</p>
+      <div class="folder-box">
+        <div class="folder-title" id="folderName">尚未选择文件夹</div>
+        <div class="folder-path" id="folderPath">请先选择桌面文件夹，或放置目标图片的其他文件夹。</div>
+      </div>
+      <div class="button-row">
+        <button class="primary" id="chooseFolder">选择监控文件夹</button>
+        <button id="startWatch" disabled>开始监控</button>
+        <button class="stop" id="stopWatch" disabled>停止</button>
+      </div>
+      <div class="status" id="status"><span class="status-indicator"></span><span class="status-text" id="statusText">等待选择文件夹。监控期间请保持此网页打开。</span></div>
+      <div class="mini-grid">
+        <div class="mini"><div class="k">本次成功生成</div><div class="v" id="processedCount">0</div></div>
+        <div class="mini"><div class="k">监控检查间隔</div><div class="v">1.5 秒</div></div>
+      </div>
+      <div class="notice"><strong>浏览器权限说明：</strong>需要桌面版 Chrome 或 Edge，并由你手动授权访问文件夹。网页不能在未授权时自行扫描桌面；本工具仅检查所选文件夹的第一层，不递归子文件夹。</div>
+    </section>
+
+    <section class="panel" aria-labelledby="preview-title">
+      <div class="preview-top">
+        <div>
+          <h2 id="preview-title">实时预览</h2>
+          <p class="sub" style="margin-bottom:0">预览只用于调整样式，不会保存或触发自动处理。</p>
+        </div>
+        <label class="file-pick">选择预览图片
+          <input id="previewFile" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" />
+        </label>
+      </div>
+      <div class="preview-area" id="previewArea">
+        <div class="empty" id="emptyPreview"><div class="empty-icon">✦</div><strong>先看看标题效果</strong><br />选择一张 JPG、PNG 或 WebP 图片作为预览。这里的操作不会修改原图。</div>
+        <canvas id="previewCanvas" hidden aria-label="封面标题预览"></canvas>
+      </div>
+      <div class="log-head"><h3>处理记录</h3><button id="clearLog">清空记录</button></div>
+      <div class="log" id="log" aria-live="polite"><div class="log-item"><span class="log-time">就绪</span><span class="msg">程序加载完成。选择文件夹后即可启动监控。</span></div></div>
+    </section>
+  </main>
+  <footer class="footer"><span>输出目录：所选文件夹 / <b>Galgame_标题封面</b></span><span>支持：JPG · JPEG · PNG · WebP</span></footer>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    gameTitle: $('gameTitle'), titleRatio: $('titleRatio'), ratioValue: $('ratioValue'),
+    fontFamily: $('fontFamily'), textColor: $('textColor'), colorValue: $('colorValue'),
+    shadow: $('shadow'), shadowValue: $('shadowValue'), quality: $('quality'), qualityValue: $('qualityValue'),
+    chooseFolder: $('chooseFolder'), startWatch: $('startWatch'), stopWatch: $('stopWatch'),
+    folderName: $('folderName'), folderPath: $('folderPath'), status: $('status'), statusText: $('statusText'),
+    processedCount: $('processedCount'), previewFile: $('previewFile'), previewCanvas: $('previewCanvas'),
+    emptyPreview: $('emptyPreview'), log: $('log'), clearLog: $('clearLog')
+  };
+
+  const OUTPUT_DIR = 'Galgame_标题封面';
+  const TARGET_NAME = /^0\.(?:jpe?g|png|webp)$/i;
+  let rootHandle = null;
+  let outputHandle = null;
+  let watchTimer = null;
+  let running = false;
+  let scanBusy = false;
+  let known = new Map();          // latest successfully handled signature / startup baseline
+  let pending = new Map();        // candidate files that must remain stable across scans
+  let processing = new Set();
+  let previewImage = null;
+  let previewUrl = null;
+  let totalProcessed = 0;
+  let lastScanError = '';
+
+  const settings = () => ({
+    title: (els.gameTitle.value || '').trim() || '游戏名称',
+    ratio: Number(els.titleRatio.value) / 100,
+    fontFamily: els.fontFamily.value,
+    color: els.textColor.value,
+    shadow: Number(els.shadow.value),
+    quality: Number(els.quality.value) / 100
+  });
+
+  function updateControlLabels() {
+    els.ratioValue.textContent = `${els.titleRatio.value}%`;
+    els.colorValue.textContent = els.textColor.value.toUpperCase();
+    els.shadowValue.textContent = `${els.shadow.value}%`;
+    els.qualityValue.textContent = `${els.quality.value}%`;
+    refreshPreview();
+  }
+
+  function setStatus(message, mode = '') {
+    els.status.className = `status${mode ? ' ' + mode : ''}`;
+    els.statusText.textContent = message;
+  }
+
+  function addLog(message, type = '') {
+    const item = document.createElement('div');
+    item.className = `log-item${type ? ' ' + type : ''}`;
+    const time = document.createElement('span');
+    time.className = 'log-time';
+    time.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    const msg = document.createElement('span');
+    msg.className = 'msg';
+    msg.textContent = message;
+    item.append(time, msg);
+    els.log.prepend(item);
+    while (els.log.children.length > 100) els.log.lastElementChild.remove();
+  }
+
+  function signature(file) { return `${file.size}:${file.lastModified}`; }
+
+  function wrapText(ctx, text, maxWidth) {
+    const lines = [];
+    const paragraphs = String(text).split('\n');
+    for (const paragraph of paragraphs) {
+      let line = '';
+      for (const ch of Array.from(paragraph)) {
+        if (ch === '\r') continue;
+        const test = line + ch;
+        if (line && ctx.measureText(test).width > maxWidth) {
+          lines.push(line.trim());
+          line = ch.trim() ? ch : '';
+        } else {
+          line = test;
+        }
+      }
+      if (line.trim()) lines.push(line.trim());
+      if (!paragraph && paragraphs.length > 1) lines.push('');
+    }
+    return lines.filter((line, i, arr) => line !== '' || (i > 0 && arr[i - 1] !== ''));
+  }
+
+  function drawCover(canvas, image, opts) {
+    const width = image.naturalWidth || image.videoWidth || image.width;
+    const height = image.naturalHeight || image.videoHeight || image.height;
+    if (!width || !height) throw new Error('无法读取图片尺寸');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d', {alpha:true});
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(image, 0, 0, width, height);
+
+    const title = opts.title;
+    if (!title) return;
+    const maxWidth = Math.max(20, width * opts.ratio);
+    const maxFont = Math.max(14, Math.min(width * 0.115, height * 0.13));
+    const minFont = Math.max(13, Math.min(width, height) * 0.027);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.miterLimit = 2;
+    ctx.font = `900 ${maxFont}px ${opts.fontFamily}`;
+    const measure = ctx.measureText(title).width || 1;
+    let fontSize = maxFont * Math.min(1, maxWidth / measure);
+    let lines;
+    if (fontSize >= minFont) {
+      fontSize = Math.max(minFont, fontSize);
+      lines = [title];
+    } else {
+      fontSize = minFont;
+      ctx.font = `900 ${fontSize}px ${opts.fontFamily}`;
+      lines = wrapText(ctx, title, maxWidth);
+      if (!lines.length) lines = [title];
+      // If a very long title creates too many lines, shrink slightly to keep the title block balanced.
+      if (lines.length > 3) {
+        fontSize = Math.max(10, fontSize * 3 / lines.length);
+        ctx.font = `900 ${fontSize}px ${opts.fontFamily}`;
+        lines = wrapText(ctx, title, maxWidth);
+      }
+    }
+    ctx.font = `900 ${fontSize}px ${opts.fontFamily}`;
+    const lineHeight = fontSize * 1.16;
+    const totalHeight = lineHeight * lines.length;
+    const centerY = height / 2;
+    const shadowAlpha = Math.min(0.95, 0.2 + opts.shadow / 50);
+    ctx.shadowColor = opts.shadow === 0 ? 'rgba(0,0,0,0)' : `rgba(0,0,0,${shadowAlpha})`;
+    ctx.shadowBlur = fontSize * (opts.shadow / 100) * 1.6;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = fontSize * (opts.shadow / 100) * 0.45;
+    ctx.lineWidth = Math.max(1, fontSize * 0.075);
+    ctx.strokeStyle = 'rgba(12,10,20,0.76)';
+    ctx.fillStyle = opts.color;
+    lines.forEach((line, index) => {
+      const y = centerY - totalHeight / 2 + lineHeight * index + lineHeight / 2;
+      ctx.strokeText(line, width / 2, y, maxWidth);
+      ctx.fillText(line, width / 2, y, maxWidth);
+    });
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+  }
+
+  function refreshPreview() {
+    if (!previewImage || previewImage.complete === false) return;
+    try {
+      drawCover(els.previewCanvas, previewImage, settings());
+      els.previewCanvas.hidden = false;
+      els.emptyPreview.hidden = true;
+    } catch (err) {
+      els.previewCanvas.hidden = true;
+      els.emptyPreview.hidden = false;
+      addLog(`预览失败：${err.message}`, 'err');
+    }
+  }
+
+  async function imageFromFile(file) {
+    if ('createImageBitmap' in window) {
+      try { return await createImageBitmap(file); } catch (_) { /* fall back to HTMLImageElement */ }
+    }
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('图片解码失败')); };
+      img.src = url;
+    });
+  }
+
+  function canvasBlob(canvas, type, quality) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(blob => {
+        if (!blob) return reject(new Error('浏览器无法导出图片'));
+        if (blob.type !== type) return reject(new Error(`浏览器未能导出 ${type} 格式，已停止以避免扩展名与文件格式不一致`));
+        resolve(blob);
+      }, type, quality);
+    });
+  }
+
+  async function processCandidate(item) {
+    const {key, signature: candidateSignature, handle, name} = item;
+    if (processing.has(key)) return;
+    processing.add(key);
+    try {
+      const file = await handle.getFile();
+      const currentSignature = signature(file);
+      if (currentSignature !== candidateSignature) {
+        pending.set(key, {signature: currentSignature, stable: 1, handle, name});
+        return;
+      }
+      if (!file.size) throw new Error('文件大小为 0，可能仍在复制中');
+      const ext = name.split('.').pop().toLowerCase();
+      const mime = (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg' : (ext === 'png' ? 'image/png' : 'image/webp');
+      const image = await imageFromFile(file);
+      const canvas = document.createElement('canvas');
+      drawCover(canvas, image, settings());
+      if (typeof image.close === 'function') image.close();
+      const blob = await canvasBlob(canvas, mime, settings().quality);
+      const outFile = await outputHandle.getFileHandle(name, {create:true});
+      const writable = await outFile.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      known.set(key, candidateSignature);
+      pending.delete(key);
+      totalProcessed++;
+      els.processedCount.textContent = String(totalProcessed);
+      addLog(`已生成：${name} → ${OUTPUT_DIR}/${name}`, 'ok');
+      setStatus(`监控中 · 最近处理完成：${name}`, 'running');
+    } catch (err) {
+      known.set(key, candidateSignature); // avoid repeatedly logging the same failed file every poll
+      pending.delete(key);
+      addLog(`处理失败：${name}（${err.message || err}）`, 'err');
+      setStatus(`处理失败：${name}。更换/重新保存该图片后会再次检测。`, 'error');
+    } finally {
+      processing.delete(key);
+    }
+  }
+
+  async function scanDirectory(baseline = false) {
+    if (scanBusy || (!running && !baseline) || !rootHandle) return;
+    scanBusy = true;
+    try {
+      const present = new Set();
+      const ready = [];
+      for await (const [name, handle] of rootHandle.entries()) {
+        if (handle.kind !== 'file' || !TARGET_NAME.test(name)) continue;
+        const file = await handle.getFile();
+        const key = name.toLowerCase();
+        const sig = signature(file);
+        present.add(key);
+        if (baseline) {
+          known.set(key, sig);
+          pending.delete(key);
+          continue;
+        }
+        if (known.get(key) === sig) {
+          pending.delete(key);
+          continue;
+        }
+        const previous = pending.get(key);
+        if (previous && previous.signature === sig) {
+          previous.stable += 1;
+          previous.handle = handle;
+          previous.name = name;
+        } else {
+          pending.set(key, {signature:sig, stable:1, handle, name});
+        }
+        const candidate = pending.get(key);
+        // Require the same file signature in two consecutive scans to avoid catching a half-copied image.
+        if (candidate.stable >= 2 && !processing.has(key)) {
+          ready.push({key, ...candidate});
+          pending.delete(key);
+        }
+      }
+      for (const key of Array.from(known.keys())) {
+        if (!present.has(key)) { known.delete(key); pending.delete(key); }
+      }
+      for (const key of Array.from(pending.keys())) {
+        if (!present.has(key)) pending.delete(key);
+      }
+      lastScanError = '';
+      if (!baseline) for (const item of ready) await processCandidate(item);
+    } catch (err) {
+      const message = err && err.message ? err.message : String(err);
+      if (message !== lastScanError) addLog(`扫描文件夹失败：${message}`, 'err');
+      lastScanError = message;
+      setStatus('无法读取文件夹；请确认授权仍有效，必要时重新选择文件夹。', 'error');
+    } finally {
+      scanBusy = false;
+    }
+  }
+
+  async function chooseFolder() {
+    if (!('showDirectoryPicker' in window)) {
+      addLog('当前浏览器不支持文件夹监控 API。请使用桌面版 Chrome 或 Edge。', 'err');
+      setStatus('此浏览器不支持自动监控，请改用桌面版 Chrome 或 Edge。', 'error');
+      return;
+    }
+    try {
+      const handle = await window.showDirectoryPicker({mode:'readwrite'});
+      rootHandle = handle;
+      outputHandle = null;
+      known.clear();
+      pending.clear();
+      els.folderName.textContent = handle.name || '已选择文件夹';
+      els.folderPath.textContent = `目标文件：${handle.name}/0.jpg、0.jpeg、0.png、0.webp；输出：${OUTPUT_DIR}/`;
+      els.startWatch.disabled = false;
+      addLog(`已选择监控文件夹：${handle.name}`, 'ok');
+      setStatus('文件夹已授权。启动后会先建立基线，已有图片不会立刻处理。');
+    } catch (err) {
+      if (err && err.name !== 'AbortError') {
+        addLog(`选择文件夹失败：${err.message || err}`, 'err');
+        setStatus('未能选择文件夹。', 'error');
+      }
+    }
+  }
+
+  async function startWatching() {
+    if (!rootHandle) return;
+    try {
+      let permission = await rootHandle.queryPermission({mode:'readwrite'});
+      if (permission !== 'granted') permission = await rootHandle.requestPermission({mode:'readwrite'});
+      if (permission !== 'granted') throw new Error('未获得读写权限');
+      outputHandle = await rootHandle.getDirectoryHandle(OUTPUT_DIR, {create:true});
+      known.clear();
+      pending.clear();
+      await scanDirectory(true); // baseline: ignore all files already present
+      running = true;
+      watchTimer = window.setInterval(() => { scanDirectory(false); }, 1500);
+      els.startWatch.disabled = true;
+      els.chooseFolder.disabled = true;
+      els.stopWatch.disabled = false;
+      setStatus('监控中：只处理启动后新出现或被替换的目标图片。', 'running');
+      addLog('监控已启动；首次扫描仅登记现有文件。', 'ok');
+    } catch (err) {
+      addLog(`无法启动监控：${err.message || err}`, 'err');
+      setStatus(`无法启动监控：${err.message || err}`, 'error');
+    }
+  }
+
+  function stopWatching() {
+    running = false;
+    if (watchTimer !== null) window.clearInterval(watchTimer);
+    watchTimer = null;
+    els.stopWatch.disabled = true;
+    els.startWatch.disabled = !rootHandle;
+    els.chooseFolder.disabled = false;
+    setStatus('监控已停止。重新启动会重新建立基线，期间已存在的图片不会处理。');
+    addLog('监控已停止。', 'warn');
+  }
+
+  els.chooseFolder.addEventListener('click', chooseFolder);
+  els.startWatch.addEventListener('click', startWatching);
+  els.stopWatch.addEventListener('click', stopWatching);
+  els.clearLog.addEventListener('click', () => { els.log.replaceChildren(); addLog('记录已清空。'); });
+  [els.gameTitle, els.titleRatio, els.fontFamily, els.textColor, els.shadow, els.quality].forEach(el => el.addEventListener('input', updateControlLabels));
+  els.previewFile.addEventListener('change', async () => {
+    const file = els.previewFile.files && els.previewFile.files[0];
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/i.test(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name)) {
+      addLog('预览图片格式不支持，请选择 JPG、PNG 或 WebP。', 'warn');
+      return;
+    }
+    try {
+      const image = await imageFromFile(file);
+      if (previewImage && typeof previewImage.close === 'function') previewImage.close();
+      previewImage = image;
+      refreshPreview();
+      addLog(`已载入预览图：${file.name}（仅预览，不会保存）`, 'ok');
+    } catch (err) {
+      addLog(`无法载入预览图：${err.message || err}`, 'err');
+    }
+  });
+
+  if (!('showDirectoryPicker' in window)) {
+    els.chooseFolder.textContent = '浏览器不支持文件夹监控';
+    setStatus('建议使用桌面版 Chrome 或 Edge 打开此 HTML 文件。', 'error');
+  }
+  updateControlLabels();
+  window.addEventListener('beforeunload', () => {
+    if (watchTimer !== null) window.clearInterval(watchTimer);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  });
+})();
+</script>
+</body>
+</html>
