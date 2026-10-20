@@ -1,0 +1,1 @@
+cd /d "D:\【自动加文字水印】" && pyinstaller --noconfirm --clean --windowed --onefile --name "Galgame_Cover_Title_Watcher_quick_title" --icon "D:\【自动加文字水印】\icon.ico" "D:\【自动加文字水印】\Galgame_Cover_Title_Watcher_quick_title.py"
